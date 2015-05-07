@@ -21,10 +21,19 @@ def preferences(lang):
     '''Cart'''
     if request.method == 'POST':
         cart = request.form.get('cart')
+        warehouse = request.form.get('warehouse')
+        picking = request.form.get('picking')
 
-        user = User(session['user'])
-        user.set_preferences({'cart': cart})
-        return redirect(url_for('.picking', lang=g.language))
+        data = {}
+        if cart:
+            data['cart'] = cart
+        if warehouse:
+            data['stock_warehouse'] = warehouse
+        if data:
+            user = User(session['user'])
+            user.set_preferences(data)
+        if picking:
+            return redirect(url_for('.picking', lang=g.language))
 
     carts = Cart.search([])
     warehouses = Location.search([('type', '=', 'warehouse')])
@@ -53,7 +62,7 @@ def picking(lang):
     '''Picking'''
 
     user = User(session['user'])
-    if not user.warehouse:
+    if not user.stock_warehouse:
         flash(_('Select the warehouse in which you are working.'), 'info')
         return redirect(url_for('.preferences', lang=g.language))
     if not user.cart:
@@ -61,7 +70,7 @@ def picking(lang):
         return redirect(url_for('.preferences', lang=g.language))
 
     with Transaction().set_user(user.id):
-        products = ShipmentOutCart.get_products(warehouse=user.warehouse)
+        products = ShipmentOutCart.get_products(warehouse=user.stock_warehouse)
 
     shipments = []
     if products:
