@@ -72,12 +72,15 @@ def picking(lang):
     with Transaction().set_user(user.id):
         products = ShipmentOutCart.get_products(warehouse=user.stock_warehouse)
 
-    shipments = []
-    if products:
-        for k, v in products.iteritems():
-            for shipment in v['shipments']:
-                if not shipment['code'] in shipments:
-                    shipments.append(shipment['code'])
+        shipments = []
+        if products:
+            for k, v in products.iteritems():
+                for shipment in v['shipments']:
+                    if not shipment['code'] in shipments:
+                        shipments.append(shipment['code'])
+
+        # print shipment reports
+        ShipmentOutCart.print_shipments(shipments)
 
     #breadcumbs
     breadcrumbs = [{
@@ -92,4 +95,34 @@ def picking(lang):
         breadcrumbs=breadcrumbs,
         products=products,
         shipments=shipments,
+        )
+
+@stockcart.route("/picking-done", methods=["POST"], endpoint="picking-done")
+@login_required
+@tryton.transaction()
+@csrf.exempt
+def picking_done(lang):
+    '''Picking Done'''
+    if request.method == 'POST':
+        done_end = request.form.get('done-end')
+        done_next = request.form.get('done-next')
+        shipments = request.form.get('shipments')
+
+        shipments = shipments.split(',')
+
+        ShipmentOutCart.done_cart(shipments)
+        if done_next:
+            return redirect(url_for('.picking', lang=g.language))
+
+    #breadcumbs
+    breadcrumbs = [{
+        'slug': None,
+        'name': _('Stock'),
+        }, {
+        'slug': url_for('.picking-done', lang=g.language),
+        'name': _('Done'),
+        }]
+
+    return render_template('stock-picking-done.html',
+        breadcrumbs=breadcrumbs,
         )
