@@ -34,7 +34,7 @@ def preferences(lang):
             user.set_preferences(data)
         if picking:
             return redirect(url_for('.picking', lang=g.language))
-        flash(_('Update your prefrences'))
+        flash(_('Updated your prefrences'))
 
     carts = Cart.search([])
     warehouses = Location.search([('type', '=', 'warehouse')])
