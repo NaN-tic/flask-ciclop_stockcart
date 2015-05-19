@@ -20,6 +20,8 @@ Location = tryton.pool.get('stock.location')
 def preferences(lang):
     '''Cart'''
     if request.method == 'POST':
+        user = User(session['user'])
+
         cart = request.form.get('cart')
         warehouse = request.form.get('warehouse')
         picking = request.form.get('picking')
@@ -31,7 +33,8 @@ def preferences(lang):
             data['stock_warehouse'] = warehouse
         if data:
             user = User(session['user'])
-            user.set_preferences(data)
+            with Transaction().set_user(user.id):
+                user.set_preferences(data)
         if picking:
             return redirect(url_for('.picking', lang=g.language))
         flash(_('Updated your prefrences'))
