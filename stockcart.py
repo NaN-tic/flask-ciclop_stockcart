@@ -77,8 +77,8 @@ def picking(lang):
         products = ShipmentOutCart.get_products(warehouse=user.stock_warehouse)
 
         shipments = []
-        if products:
-            for k, v in products.iteritems():
+        for product in products:
+            for k, v in product.iteritems():
                 for shipment in v['shipments']:
                     if not shipment['code'] in shipments:
                         shipments.append(shipment['code'])
