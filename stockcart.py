@@ -22,7 +22,9 @@ def print_shipments(lang):
 
     shipments = request.json.get('shipments')
     if shipments:
-        ShipmentOutCart.print_shipments(shipments)
+        user = User(session['user'])
+        with Transaction().set_user(user.id):
+            ShipmentOutCart.print_shipments(shipments)
 
     return jsonify(result=True)
 
