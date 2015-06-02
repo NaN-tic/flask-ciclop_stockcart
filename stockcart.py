@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, g, url_for, flash, redirect, \
-    session, request
+    session, request, jsonify
 from ciclop.tryton import tryton
 from ciclop.csrf import csrf
 from ciclop.helpers import login_required
@@ -12,6 +12,19 @@ User = tryton.pool.get('res.user')
 Cart = tryton.pool.get('stock.cart')
 ShipmentOutCart = tryton.pool.get('stock.shipment.out.cart')
 Location = tryton.pool.get('stock.location')
+
+@stockcart.route("/print", methods=["POST"], endpoint="print")
+@login_required
+@tryton.transaction()
+@csrf.exempt
+def print_shipments(lang):
+    '''Print Shipments - Get JSON shipments codes'''
+
+    shipments = request.json.get('shipments')
+    if shipments:
+        ShipmentOutCart.print_shipments(shipments)
+
+    return jsonify(result=True)
 
 @stockcart.route("/preferences", methods=["GET", "POST"], endpoint="preferences")
 @login_required
@@ -82,9 +95,6 @@ def picking(lang):
                 for shipment in v['shipments']:
                     if not shipment['code'] in shipments:
                         shipments.append(shipment['code'])
-
-        # print shipment reports
-        ShipmentOutCart.print_shipments(shipments)
 
     #breadcumbs
     breadcrumbs = [{
