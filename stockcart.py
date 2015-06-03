@@ -97,6 +97,7 @@ def picking(lang):
                 for shipment in v['shipments']:
                     if not shipment['code'] in shipments:
                         shipments.append(shipment['code'])
+        shipments = sorted(shipments)
 
     #breadcumbs
     breadcrumbs = [{
