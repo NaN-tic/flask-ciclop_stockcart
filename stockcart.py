@@ -99,7 +99,7 @@ def picking(lang):
 
     if request.form.get('picking'):
         if request.form.getlist('shipments'): # picking with select shipments
-            shipments_request = filter(None, request.form.getlist('shipments')) # remove empty str
+            shipments_request = filter(None, set(request.form.getlist('shipments'))) # remove empty str
 
             shipments = ShipmentOut.search([
                 ('state', '=', 'assigned'),
