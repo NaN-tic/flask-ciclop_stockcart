@@ -99,12 +99,13 @@ def picking(lang):
 
     if request.form.get('picking'):
         if request.form.getlist('shipments'): # picking with select shipments
-            shipments_request = filter(None, set(request.form.getlist('shipments'))) # remove empty str
+            shipments_request = filter(None, request.form.getlist('shipments')) # remove empty str
 
             shipments = ShipmentOut.search([
                 ('state', '=', 'assigned'),
                 ('code', 'in', shipments_request),
                 ])
+
             if shipments:
                 carts_assigned = ShipmentOutCart.search([
                     ('shipment', 'in', shipments),
@@ -119,11 +120,21 @@ def picking(lang):
                         shipments_request.remove(s.code)
 
                 if to_create:
-                    carts = ShipmentOutCart.create(to_create)
+                    carts_created = ShipmentOutCart.create(to_create)
                 else:
-                    carts = []
+                    carts_created = []
 
-                products = ShipmentOutCart.get_products_by_carts(carts_assigned + carts)
+                # respect shipment order from shipments request
+                shipment2cart = {} # {code: cart obj}
+                for c in carts_assigned + carts_created:
+                    shipment2cart[c.shipment.code] = c
+
+                carts = []
+                for sreq in shipments_request:
+                    if shipment2cart.get(sreq):
+                        carts.append(shipment2cart[sreq])
+
+                products = ShipmentOutCart.get_products_by_carts(carts)
 
                 return render_template('stock-picking.html',
                     breadcrumbs=breadcrumbs,
