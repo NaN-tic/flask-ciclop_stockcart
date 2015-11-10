@@ -120,7 +120,8 @@ def picking(lang):
                         shipments_request.remove(s.code)
 
                 if to_create:
-                    carts_created = ShipmentOutCart.create(to_create)
+                    with Transaction().set_user(user_id):
+                        carts_created = ShipmentOutCart.create(to_create)
                 else:
                     carts_created = []
 
