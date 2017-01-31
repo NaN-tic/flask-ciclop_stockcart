@@ -11,6 +11,7 @@ stockcart = Blueprint('stockcart', __name__, template_folder='templates')
 User = tryton.pool.get('res.user')
 Cart = tryton.pool.get('stock.cart')
 ShipmentOutCart = tryton.pool.get('stock.shipment.out.cart')
+ShipmentOutCartLine = tryton.pool.get('stock.shipment.out.cart.line')
 ShipmentOut = tryton.pool.get('stock.shipment.out')
 Location = tryton.pool.get('stock.location')
 
@@ -66,7 +67,6 @@ def preferences(lang):
         'slug': url_for('.preferences', lang=g.language),
         'name': _('Preferences'),
         }]
-
 
     return render_template('stock-preferences.html',
         breadcrumbs=breadcrumbs,
@@ -184,3 +184,18 @@ def picking_done(lang):
             'info')
 
     return redirect(url_for('.picking', lang=g.language))
+
+@stockcart.route("/pickings", methods=["POST"], endpoint="pickings")
+@login_required
+@tryton.transaction()
+@csrf.exempt
+def pickings(lang):
+    '''Pickings Lines'''
+
+    pickings = request.json.get('pickings')
+    if pickings:
+        user = User(session['user'])
+        with Transaction().set_user(user.id):
+            ShipmentOutCartLine.save_pickings(pickings)
+
+    return jsonify(result=True)
