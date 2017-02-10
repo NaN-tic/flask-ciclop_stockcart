@@ -98,54 +98,54 @@ def picking(lang):
         }]
 
     if request.form.get('picking'):
-        if request.form.getlist('shipments'): # picking with select shipments
-            shipments_request = filter(None, request.form.getlist('shipments')) # remove empty str
+        with Transaction().set_user(user_id):
+            if request.form.getlist('shipments'): # picking with select shipments
+                shipments_request = filter(None, request.form.getlist('shipments')) # remove empty str
 
-            shipments = ShipmentOut.search([
-                ('state', '=', 'assigned'),
-                ('code', 'in', shipments_request),
-                ])
-
-            if shipments:
-                carts_assigned = ShipmentOutCart.search([
-                    ('shipment', 'in', shipments),
+                shipments = ShipmentOut.search([
+                    ('state', '=', 'assigned'),
+                    ('code', 'in', shipments_request),
                     ])
-                shipments_assigned = [c.shipment for c in carts_assigned]
 
-                to_create = []
-                for s in shipments:
-                    if s not in shipments_assigned:
-                        to_create.append({'shipment': s})
-                    if s.code not in shipments_request:
-                        shipments_request.remove(s.code)
+                if shipments:
+                    carts_assigned = ShipmentOutCart.search([
+                        ('shipment', 'in', shipments),
+                        ])
+                    shipments_assigned = [c.shipment for c in carts_assigned]
 
-                if to_create:
-                    with Transaction().set_user(user_id):
-                        carts_created = ShipmentOutCart.create(to_create)
+                    to_create = []
+                    for s in shipments:
+                        if s not in shipments_assigned:
+                            to_create.append({'shipment': s})
+                        if s.code not in shipments_request:
+                            shipments_request.remove(s.code)
+
+                    if to_create:
+                        with Transaction().set_user(user_id):
+                            carts_created = ShipmentOutCart.create(to_create)
+                    else:
+                        carts_created = []
+
+                    # respect shipment order from shipments request
+                    shipment2cart = {} # {code: cart obj}
+                    for c in carts_assigned + carts_created:
+                        shipment2cart[c.shipment.code] = c
+
+                    carts = []
+                    for sreq in shipments_request:
+                        if shipment2cart.get(sreq):
+                            carts.append(shipment2cart[sreq])
+
+                    products = ShipmentOutCart.get_products_by_carts(carts)
+
+                    return render_template('stock-picking.html',
+                        breadcrumbs=breadcrumbs,
+                        products=products,
+                        shipments=shipments_request, # code shipments
+                        )
                 else:
-                    carts_created = []
-
-                # respect shipment order from shipments request
-                shipment2cart = {} # {code: cart obj}
-                for c in carts_assigned + carts_created:
-                    shipment2cart[c.shipment.code] = c
-
-                carts = []
-                for sreq in shipments_request:
-                    if shipment2cart.get(sreq):
-                        carts.append(shipment2cart[sreq])
-
-                products = ShipmentOutCart.get_products_by_carts(carts)
-
-                return render_template('stock-picking.html',
-                    breadcrumbs=breadcrumbs,
-                    products=products,
-                    shipments=shipments_request, # code shipments
-                    )
-            else:
-                flash(_('There are not found shipments with code and state assigned.'), 'info')
-        else: # picking with assign shipments
-            with Transaction().set_user(user_id):
+                    flash(_('There are not found shipments with code and state assigned.'), 'info')
+            else: # picking with assign shipments
                 products = ShipmentOutCart.get_products(warehouse=warehouse)
 
                 shipments = []
@@ -156,11 +156,11 @@ def picking(lang):
                                 shipments.append(shipment['code'])
                 shipments = sorted(shipments)
 
-            return render_template('stock-picking.html',
-                breadcrumbs=breadcrumbs,
-                products=products,
-                shipments=shipments, # code shipments
-                )
+                return render_template('stock-picking.html',
+                    breadcrumbs=breadcrumbs,
+                    products=products,
+                    shipments=shipments, # code shipments
+                    )
 
     return render_template('stock-picking-index.html',
         breadcrumbs=breadcrumbs,
