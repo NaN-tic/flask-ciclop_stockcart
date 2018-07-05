@@ -52,6 +52,7 @@ def preferences(lang):
             user = User(session['user'])
             with Transaction().set_user(user.id):
                 user.set_preferences(data)
+            session.update(data)
         if picking:
             return redirect(url_for('.picking', lang=g.language))
         flash(_('Updated your prefrences'))
@@ -146,7 +147,13 @@ def picking(lang):
                 else:
                     flash(_('There are not found shipments with code and state assigned.'), 'info')
             else: # picking with assign shipments
-                products = ShipmentOutCart.get_products(warehouse=warehouse)
+                if request.form.get('shipment_type') == 'monoproduct':
+                    operator = '='
+                else:
+                    operator = '!='
+                domain = [('shipment_type', operator, 'monoproduct')]
+                products = ShipmentOutCart.get_products(warehouse=warehouse,
+                    domain=domain)
 
                 shipments = []
                 for product in products:
