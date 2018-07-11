@@ -148,10 +148,13 @@ def picking(lang):
                     flash(_('There are not found shipments with code and state assigned.'), 'info')
             else: # picking with assign shipments
                 if request.form.get('shipment_type') == 'monoproduct':
-                    operator = '='
+                    domain = [('shipment_type', '=', 'monoproduct')]
                 else:
-                    operator = '!='
-                domain = [('shipment_type', operator, 'monoproduct')]
+                    domain = [[
+                            'OR',
+                            ('shipment_type', '!=', 'monoproduct'),
+                            ('shipment_type', '=', None),
+                            ]]
                 products = ShipmentOutCart.get_products(warehouse=warehouse,
                     domain=domain)
 
