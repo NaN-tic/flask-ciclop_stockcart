@@ -45,9 +45,9 @@ def preferences(lang):
 
         data = {}
         if cart:
-            data['cart'] = cart
+            data['cart'] = int(cart)
         if warehouse:
-            data['stock_warehouse'] = warehouse
+            data['stock_warehouse'] = int(warehouse)
         if data:
             user = User(session['user'])
             with Transaction().set_user(user.id):
