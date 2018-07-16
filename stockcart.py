@@ -172,8 +172,14 @@ def picking(lang):
                     shipments=shipments, # code shipments
                     )
 
+    cart_shipments = ShipmentOutCart.search([
+            ('state', '=', 'draft'),
+            ('user', '=', user_id),
+            ])
+
     return render_template('stock-picking-index.html',
         breadcrumbs=breadcrumbs,
+        cart_shipments=cart_shipments,
         )
 
 @stockcart.route("/picking-done", methods=["POST"], endpoint="picking-done")
